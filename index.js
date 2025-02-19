@@ -13,6 +13,8 @@ const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 
 dotenv.config();
 const app = express();
+
+// Todo: Add CORS Configuration in production
 app.use(
   cors({
     origin: '*',
