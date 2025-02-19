@@ -71,6 +71,11 @@ app.get('/signed-url', async (req, res) => {
   }
 });
 
+// Root Route (for testing)
+app.get('/', (req, res) => {
+  res.send('Backend is running!');
+});
+
 // Start Server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
