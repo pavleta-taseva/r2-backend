@@ -15,7 +15,7 @@ app.use(
   cors({
     origin: '*',
     methods: ['GET', 'POST'],
-    allowedHeaders: ['Content-Type'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
   })
 );
 
@@ -36,6 +36,13 @@ const upload = multer({ storage });
 // Upload File to R2
 app.post('/upload', upload.single('file'), async (req, res) => {
   try {
+    if (!req.file) {
+      console.error('❌ No file received in the request.');
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
+
+    console.log('✅ File received:', req.file.originalname);
+
     const params = {
       Bucket: process.env.R2_BUCKET_NAME,
       Key: req.file.originalname,
@@ -47,8 +54,11 @@ app.post('/upload', upload.single('file'), async (req, res) => {
     await s3.send(command);
 
     const fileUrl = `${process.env.R2_ENDPOINT}/${process.env.R2_BUCKET_NAME}/${req.file.originalname}`;
+    console.log('✅ File uploaded to R2:', fileUrl);
+
     res.json({ url: fileUrl });
   } catch (error) {
+    console.error('❌ Upload error:', error);
     res.status(500).json({ error: error.message });
   }
 });
