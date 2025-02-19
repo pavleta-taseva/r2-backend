@@ -1,21 +1,27 @@
-const express = require("express");
-const multer = require("multer");
-const cors = require("cors");
-const dotenv = require("dotenv");
+const express = require('express');
+const multer = require('multer');
+const cors = require('cors');
+const dotenv = require('dotenv');
 const {
   S3Client,
   PutObjectCommand,
   GetObjectCommand,
-} = require("@aws-sdk/client-s3");
-const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
+} = require('@aws-sdk/client-s3');
+const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 
 dotenv.config();
 const app = express();
-app.use(cors());
+app.use(
+  cors({
+    origin: '*',
+    methods: ['GET', 'POST'],
+    allowedHeaders: ['Content-Type'],
+  })
+);
 
 // Configure S3Client for Cloudflare R2
 const s3 = new S3Client({
-  region: "auto",
+  region: 'auto',
   endpoint: process.env.R2_ENDPOINT,
   credentials: {
     accessKeyId: process.env.R2_ACCESS_KEY_ID,
@@ -28,7 +34,7 @@ const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
 // Upload File to R2
-app.post("/upload", upload.single("file"), async (req, res) => {
+app.post('/upload', upload.single('file'), async (req, res) => {
   try {
     const params = {
       Bucket: process.env.R2_BUCKET_NAME,
@@ -48,7 +54,7 @@ app.post("/upload", upload.single("file"), async (req, res) => {
 });
 
 // Generate Signed URL for Private Files
-app.get("/signed-url", async (req, res) => {
+app.get('/signed-url', async (req, res) => {
   try {
     const { filename } = req.query;
     const params = {
@@ -66,6 +72,7 @@ app.get("/signed-url", async (req, res) => {
 });
 
 // Start Server
-app.listen(process.env.PORT, () => {
-  console.log(`Server running on port ${process.env.PORT}`);
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
