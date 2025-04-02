@@ -3,6 +3,7 @@ const multer = require('multer');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const crypto = require('crypto');
+const nodemailer = require('nodemailer');
 const rateLimit = require('express-rate-limit');
 const {
   S3Client,
@@ -22,6 +23,8 @@ app.use(
     allowedHeaders: ['Content-Type', 'Authorization'],
   })
 );
+
+app.use(express.json());
 
 // Configure S3Client for Cloudflare R2
 const s3 = new S3Client({
@@ -107,6 +110,39 @@ app.get('/signed-url', async (req, res) => {
   } catch (error) {
     console.error('❌ Signed URL error:', error);
     res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/send-email', async (req, res) => {
+  const { name, email, message } = req.body;
+
+  if (!name || !email || !message) {
+    return res.status(400).json({ error: 'All fields are required' });
+  }
+
+  try {
+    const transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port: process.env.SMTP_PORT,
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      },
+    });
+
+    const mailOptions = {
+      from: `"A Witch's Grimoire" <${process.env.SMTP_USER}>`,
+      to: 'awitchsgrimoire.dev@gmail.com',
+      subject: `New Contact Form Submission from ${name}`,
+      text: `Name: ${name}\nEmail: ${email}\n\nMessage:\n${message}`,
+    };
+
+    await transporter.sendMail(mailOptions);
+    console.log('✅ Email sent successfully!');
+    res.json({ success: 'Email sent successfully!' });
+  } catch (error) {
+    console.error('❌ Email error:', error);
+    res.status(500).json({ error: 'Failed to send email' });
   }
 });
 
