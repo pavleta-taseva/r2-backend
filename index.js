@@ -62,15 +62,12 @@ const uploadLimiter = rateLimit({
 app.post('/upload', uploadLimiter, upload.single('file'), async (req, res) => {
   try {
     if (!req.file) {
-      console.error('❌ No file received in the request.');
       return res.status(400).json({ error: 'No file uploaded' });
     }
 
     // Generate a random filename
     const fileExt = req.file.originalname.split('.').pop();
     const safeFileName = `${crypto.randomBytes(10).toString('hex')}.${fileExt}`;
-
-    console.log('✅ File received:', safeFileName);
 
     const params = {
       Bucket: process.env.R2_BUCKET_NAME,
@@ -83,11 +80,8 @@ app.post('/upload', uploadLimiter, upload.single('file'), async (req, res) => {
     const command = new PutObjectCommand(params);
     await s3.send(command);
 
-    console.log('✅ File uploaded to R2:', safeFileName);
-
     res.json({ filename: safeFileName });
   } catch (error) {
-    console.error('❌ Upload error:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -95,7 +89,6 @@ app.post('/upload', uploadLimiter, upload.single('file'), async (req, res) => {
 // Delete File from R2
 app.delete('/delete', async (req, res) => {
   const { filename } = req.body;
-  console.log('filename', filename);
 
   if (!filename) {
     return res.status(400).json({ message: 'Filename is required.' });
@@ -109,10 +102,8 @@ app.delete('/delete', async (req, res) => {
 
     await s3.send(command);
 
-    console.log('✅ File deleted from R2:', filename);
     return res.status(200).json({ message: 'File deleted successfully.' });
   } catch (error) {
-    console.error('❌ Error deleting file from R2:', error);
     return res.status(500).json({ message: 'Failed to delete file.' });
   }
 });
@@ -135,7 +126,6 @@ app.get('/signed-url', async (req, res) => {
 
     res.json({ url });
   } catch (error) {
-    console.error('❌ Signed URL error:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -165,10 +155,8 @@ app.post('/send-email', async (req, res) => {
     };
 
     await transporter.sendMail(mailOptions);
-    console.log('✅ Email sent successfully!');
     res.json({ success: 'Email sent successfully!' });
   } catch (error) {
-    console.error('❌ Email error:', error);
     res.status(500).json({ error: 'Failed to send email' });
   }
 });
