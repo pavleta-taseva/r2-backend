@@ -91,7 +91,7 @@ app.post('/upload', uploadLimiter, upload.single('file'), async (req, res) => {
 });
 
 // Delete File from R2
-router.delete('/delete', async (req, res) => {
+app.delete('/delete', async (req, res) => {
   const { filename } = req.body;
 
   if (!filename) {
