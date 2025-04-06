@@ -5,6 +5,8 @@ const dotenv = require('dotenv');
 const crypto = require('crypto');
 const nodemailer = require('nodemailer');
 const rateLimit = require('express-rate-limit');
+const { DeleteObjectCommand } = require('@aws-sdk/client-s3');
+
 const {
   S3Client,
   PutObjectCommand,
@@ -93,19 +95,24 @@ app.post('/upload', uploadLimiter, upload.single('file'), async (req, res) => {
 // Delete File from R2
 app.delete('/delete', async (req, res) => {
   const { filename } = req.body;
+  console.log('filename', filename);
 
   if (!filename) {
     return res.status(400).json({ message: 'Filename is required.' });
   }
 
   try {
-    await R2.deleteObject({
+    const command = new DeleteObjectCommand({
       Bucket: process.env.R2_BUCKET_NAME,
       Key: filename,
     });
+
+    await s3.send(command);
+
+    console.log('✅ File deleted from R2:', filename);
     return res.status(200).json({ message: 'File deleted successfully.' });
   } catch (error) {
-    console.error('Error deleting file:', error);
+    console.error('❌ Error deleting file from R2:', error);
     return res.status(500).json({ message: 'Failed to delete file.' });
   }
 });
