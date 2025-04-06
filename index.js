@@ -90,6 +90,26 @@ app.post('/upload', uploadLimiter, upload.single('file'), async (req, res) => {
   }
 });
 
+// Delete File from R2
+router.delete('/delete', async (req, res) => {
+  const { filename } = req.body;
+
+  if (!filename) {
+    return res.status(400).json({ message: 'Filename is required.' });
+  }
+
+  try {
+    await R2.deleteObject({
+      Bucket: process.env.R2_BUCKET_NAME,
+      Key: filename,
+    });
+    return res.status(200).json({ message: 'File deleted successfully.' });
+  } catch (error) {
+    console.error('Error deleting file:', error);
+    return res.status(500).json({ message: 'Failed to delete file.' });
+  }
+});
+
 // Generate Signed URL for Private Files
 app.get('/signed-url', async (req, res) => {
   try {
